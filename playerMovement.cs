@@ -34,6 +34,7 @@ public class playerMovement : MonoBehaviour
     {
         //WASD input and move the player
         movePlayer();
+        rotatePlayer();
 
         //when 'K' is pressed, call the shoot method
         if(Input.GetKeyDown(KeyCode.K))
@@ -65,6 +66,20 @@ public class playerMovement : MonoBehaviour
         else
         {
             Debug.LogWarning("playerShooting script is null!");
+        }
+    }
+
+    //method to handle player rotation to face movement direction
+    private void rotatePlayer()
+    {
+        //checking for input
+        if(movementInput.sqrMagnitude > 0.01f)
+        {
+            //getting and setting direction and rotation for gameobject
+            Vector3 direction = new Vector3(movementInput.x, 0, movementInput.y);
+            Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+            //rotation smoothness
+            rb.rotation = Quaternion.Slerp(rb.rotation, targetRotation, Time.deltaTime * 10f);
         }
     }
 }
