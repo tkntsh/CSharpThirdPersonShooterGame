@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class animationControls : MonoBehaviour
 {
@@ -18,13 +19,32 @@ public class animationControls : MonoBehaviour
     //method runs per frame
     void Update()
     {
-        //getting player movement speed
+        //getting player movement input
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
-        //storing movement speed
+
+        //calc movement speed
         speed = new Vector3(horizontal, 0, vertical).magnitude;
 
-        //updating animator parameters according to current player speed
-        animator.SetFloat("Speed", speed);
+        //check if the player is moving
+        if(speed > 0.1f)
+        {
+            //triggering run animation
+            animator.SetTrigger("triggerRun");
+            animator.ResetTrigger("triggerIdle");
+        }
+        else
+        {
+            //triggering standing animation
+            animator.ResetTrigger("triggerRun");
+            animator.SetTrigger("triggerIdle");
+        }
+
+        //checking if the shoot key is pressed
+        if(Input.GetKeyDown(KeyCode.K))
+        {
+            //triggering shoot animation
+            animator.SetTrigger("triggerShoot");
+        }
     }
 }
