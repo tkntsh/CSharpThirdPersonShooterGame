@@ -5,22 +5,36 @@ using UnityEngine;
 public class enemyMovement : MonoBehaviour
 {
     //variables for player speed, and shooting range
-    public Transform player;
-    public float moveSpeed = 3f;
-    public float shootingRange = 5f; 
+    private Transform player;
+    public float speed = 0.5f;
+    public float shootingRange = 10f;
     
     //needed for calling a shooting method when enemy is close to player
     private enemyRangeAttack rangedAttack;
 
     //creating rigidbody reference
     private Rigidbody rb;
+    private Animator animator;
 
     //when application starts run method
     void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player").transform;
+        //finding gameobject with 'Player' tag
+        GameObject playerOG = GameObject.FindGameObjectWithTag("Player");
+
+        //checking if player gameobject isnt null
+        if(playerOG != null)
+        {
+            player = playerOG.transform;
+        }
+        else
+        {
+            Debug.LogWarning("Player GameObject not found! Make sure it has the 'Player' tag.");
+        }
+
         //store rigidbody component in rb
         rb = GetComponent<Rigidbody>();
+        animator = GetComponent<Animator>();
 
         //getting enemyrangeattack script on start
         rangedAttack = GetComponent<enemyRangeAttack>();
@@ -61,25 +75,61 @@ public class enemyMovement : MonoBehaviour
             if(rangedAttack != null)
             {
                 rangedAttack.attackPlayer(player);
+                animator.SetTrigger("triggerShoot");
             }
+        }
+
+        //checking if player gameobject isnt null
+        if(player != null)
+        {
+            moveTowardsPlayer();
+            updateAnimation();
         }
     }
 
     //method to move towards player position (transform)
-    void moveTowardsPlayer()
+    private void moveTowardsPlayer()
     {
-        //calc the direction to player
+        //calc direction of enemy
         Vector3 direction = (player.position - transform.position).normalized;
+        Vector3 movement = direction * speed * Time.deltaTime;
 
-        //move enemy using rigidbody
-        Vector3 newPosition = rb.position + direction * moveSpeed * Time.deltaTime;
-        rb.MovePosition(newPosition);
+        //moving enemy towards player gameobject
+        rb.MovePosition(rb.position + movement);
+
+        //rotating the enemy to face the player
+        if(direction.magnitude > 0.1f)
+        {
+            //locking on target to face/rotate enemy gameobjec to face player
+            Quaternion targetRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+            rb.rotation = Quaternion.Slerp(rb.rotation, targetRotation, Time.deltaTime * 10f);
+        }
     }
 
     //method to stop enemy movement towards player
-    void stopMoving()
+    private void stopMoving()
     {
         //stop enemy's movement
         rb.velocity = Vector3.zero;
+    }
+
+    //method to handle updating animation parameters
+    private void updateAnimation()
+    {
+        //calc distance to player
+        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+
+        //if enemy isnt close to player, run towards player
+        if(distanceToPlayer > 0.1f)
+        {
+            animator.SetTrigger("triggerRun");
+            animator.ResetTrigger("triggerIdle");
+        }
+        //otherwise stand still
+        else
+        {
+            animator.ResetTrigger("triggerRun");
+            animator.SetTrigger("triggerIdle");
+        }
     }
 }
